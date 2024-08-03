@@ -25,6 +25,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    - name: Remove existing .terraform directory
+      run: rm -rf .terraform
+
+    - name: Remove previous state files
+      run: rm -f terraform.tfstate terraform.tfstate.backup
+
     - name: Generate SSH key
       run: |
         ssh-keygen -t rsa -b 4096 -f id_rsa -q -N ""
@@ -32,7 +38,10 @@ jobs:
         cat id_rsa > private_key.pem
 
     - name: Terraform Init
-      run: terraform init -backend-config="bucket=my-terraform-state-bucket2024" -backend-config="key=my-my-terraform-state-bucket2024/terraform.tfstate" -backend-config="region=us-east-1" -backend-config="dynamodb_table=terraform-locks"
+      run: terraform init -backend-config="bucket=my-terraform-state-bucket2024" \
+                          -backend-config="key=my-terraform-state-bucket2024/terraform.tfstate" \
+                          -backend-config="region=us-east-1" \
+                          -backend-config="dynamodb_table=terraform-locks"
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
@@ -59,7 +68,6 @@ jobs:
         for IP in $WORKER_IPS; do
           scp -o StrictHostKeyChecking=no setup_k8s.sh root@$IP:/root/
           ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
-
+          
     # - name: Terraform Destroy
     #   run: terraform destroy -auto-approve
- 
