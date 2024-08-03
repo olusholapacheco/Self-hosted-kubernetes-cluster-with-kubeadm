@@ -38,10 +38,12 @@ jobs:
         cat id_rsa > private_key.pem
 
     - name: Terraform Init
-      run: terraform init -backend-config="bucket=my-terraform-state-bucket2024" \
-                          -backend-config="key=my-terraform-state-bucket2024/terraform.tfstate" \
-                          -backend-config="region=us-east-1" \
-                          -backend-config="dynamodb_table=terraform-locks"
+      run: |
+        terraform init \
+          -backend-config="bucket=my-terraform-state-bucket2024" \
+          -backend-config="key=my-terraform-state-bucket2024/terraform.tfstate" \
+          -backend-config="region=us-east-2" \
+          -backend-config="dynamodb_table=terraform-locks"
 
     - name: Terraform Apply
       run: terraform apply -auto-approve
