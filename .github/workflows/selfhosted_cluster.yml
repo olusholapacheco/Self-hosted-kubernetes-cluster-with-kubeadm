@@ -54,12 +54,12 @@ jobs:
 
     - name: Extract master IP
       run: |
-        MASTER_IP=$(terraform output -json master_public_ip | jq -r '.[]')
+        MASTER_IP=$(terraform output -raw master_public_ip)
         echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
 
     - name: Extract worker IPs
       run: |
-        WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
+        WORKER_IPS=$(terraform output -raw worker_public_ips | tr ',' ' ')
         echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
 
     - name: Install SSH client
