@@ -54,8 +54,8 @@ jobs:
 
     - name: Extract master IP
       run: |
-        MASTER_IP=$(terraform output master_public_ip | tail -1)
-        echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
+        WORKER_IPS=$(terraform output worker_public_ips | tr -d '[]' | tr ',' ' ')
+        echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
 
     - name: Extract worker IPs
       run: |
