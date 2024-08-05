@@ -54,7 +54,7 @@ jobs:
 
     - name: Extract master IP
       run: |
-        MASTER_IP=$(terraform output -json master_public_ip | jq -r '.value')
+        MASTER_IP=$(terraform output -json master_public_ip | jq -r '.[]')
         echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
 
     - name: Extract worker IPs
@@ -77,6 +77,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
 
-  
+
     # - name: Terraform Destroy
     #   run: terraform destroy -auto-approve
