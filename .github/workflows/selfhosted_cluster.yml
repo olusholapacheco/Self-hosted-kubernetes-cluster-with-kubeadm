@@ -25,11 +25,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
 
-    - name: Remove existing Terraform files
-      run: |
-        rm -rf .terraform
-        rm -f terraform.tfstate terraform.tfstate.backup
-
     - name: Verify S3 Bucket Existence
       run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
 
@@ -39,27 +34,14 @@ jobs:
     - name: Apply Terraform
       run: terraform apply -auto-approve
 
-    - name: Generate SSH key
-      run: |
-        if [ -f id_rsa ]; then rm -f id_rsa id_rsa.pub; fi
-        ssh-keygen -t rsa -b 4096 -f id_rsa -q -N ""
-        cat id_rsa.pub > public_key.pem
-        cat id_rsa > private_key.pem
-
-    - name: Add SSH key
-      run: |
-        mkdir -p ~/.ssh
-        cat private_key.pem > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-
     - name: Extract master IP
       run: |
-        WORKER_IPS=$(terraform output worker_public_ips | tr -d '[]' | tr ',' ' ')
-        echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
+        MASTER_IP=$(terraform output master_public_ip | tail -1)
+        echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
 
     - name: Extract worker IPs
       run: |
-        WORKER_IPS=$(terraform output worker_public_ips | tr ',' ' ')
+        WORKER_IPS=$(terraform output worker_public_ips | tr -d '[]"' | tr ',' ' ')
         echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
 
     - name: Install SSH client
@@ -77,6 +59,8 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
 
-  
+
+
+
     # - name: Terraform Destroy
     #   run: terraform destroy -auto-approve
