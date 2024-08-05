@@ -26,10 +26,10 @@ jobs:
         aws-region: us-east-2
 
     # Remove existing Terraform files just in case of similar state error
-    # - name: Remove existing Terraform files
+    #- name: Remove existing Terraform files
     #  run: |
-    #  rm -rf .terraform
-    # rm -f terraform.tfstate terraform.tfstate.backup
+    #    rm -rf .terraform
+    #    rm -f terraform.tfstate terraform.tfstate.backup
 
     - name: Verify S3 Bucket Existence
       run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
@@ -44,6 +44,7 @@ jobs:
       run: |
         MASTER_IP=$(terraform output master_public_ip | tail -1)
         echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
+        echo "MASTER_IP: $MASTER_IP"
 
     - name: Extract worker IPs
       run: |
@@ -55,14 +56,14 @@ jobs:
 
     - name: Set up master node
       run: |
-        scp -o StrictHostKeyChecking=no setup_k8s.sh root@$MASTER_IP:/root/
-        ssh -o StrictHostKeyChecking=no root@$MASTER_IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
+        scp -o StrictHostKeyChecking=no setup_k8s.sh "root@$MASTER_IP:/root/"
+        ssh -o StrictHostKeyChecking=no "root@$MASTER_IP" 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
 
     - name: Set up worker nodes
       run: |
         for IP in $WORKER_IPS; do
-          scp -o StrictHostKeyChecking=no setup_k8s.sh root@$IP:/root/
-          ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
+          scp -o StrictHostKeyChecking=no setup_k8s.sh "root@$IP:/root/"
+          ssh -o StrictHostKeyChecking=no "root@$IP" 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
 
     # - name: Terraform Destroy
