@@ -53,10 +53,14 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
 
     - name: Extract master IP
-      run: echo "MASTER_IP=$(terraform output -raw master_public_ip)" >> $GITHUB_ENV
+      run: |
+        MASTER_IP=$(terraform output -raw master_public_ip)
+        echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
 
     - name: Extract worker IPs
-      run: echo "WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')" >> $GITHUB_ENV
+      run: |
+        WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
+        echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
 
     - name: Install SSH client
       run: sudo apt-get install -y openssh-client
@@ -72,6 +76,7 @@ jobs:
           scp -o StrictHostKeyChecking=no setup_k8s.sh root@$IP:/root/
           ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
+
 
     # - name: Terraform Destroy
     #   run: terraform destroy -auto-approve
