@@ -61,3 +61,10 @@ fi
 
 Thinking in production when learning is very vital to doing things as it should be with best practices
 Creating s3 bucket to hold statefiles helps when running pipelines and things break, rerunning it makes it skip what is already created. While Concurrency in Dynamodb ensures that multiple people making changes to the same configurations do not clash. The changes happen in turns and eventually become consistent.
+
+# Stuck Statefile
+Changes to AWS account was made during the deployment of the pipeline, terraform state was stuck on the old S3 bucket and breaking the pipeline.  Added the following lines to the workflow to remove previous statefile.
+- name: Remove existing Terraform files
+  run: |
+    rm -rf .terraform
+    rm -f terraform.tfstate terraform.tfstate.backup
