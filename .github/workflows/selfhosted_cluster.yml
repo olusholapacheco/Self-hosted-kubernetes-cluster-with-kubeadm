@@ -27,9 +27,9 @@ jobs:
 
     # Remove existing Terraform files just in case of similar state error
     # - name: Remove existing Terraform files
-    #   run: |
-    #     rm -rf .terraform
-    #     rm -f terraform.tfstate terraform.tfstate.backup
+    #  run: |
+    #  rm -rf .terraform
+    # rm -f terraform.tfstate terraform.tfstate.backup
 
     - name: Verify S3 Bucket Existence
       run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
@@ -47,7 +47,7 @@ jobs:
 
     - name: Extract worker IPs
       run: |
-        WORKER_IPS=$(terraform output worker_public_ips | tr -d '[]"' | tr ',' ' ')
+        WORKER_IPS=$(terraform output worker_public_ips | awk -F'[" ,]' '{for(i=2;i<=NF;i++) print $i}' | xargs)
         echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
 
     - name: Install SSH client
@@ -64,7 +64,6 @@ jobs:
           scp -o StrictHostKeyChecking=no setup_k8s.sh root@$IP:/root/
           ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
-
 
     # - name: Terraform Destroy
     #   run: terraform destroy -auto-approve
