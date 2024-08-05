@@ -25,6 +25,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
 
+    # Remove existing Terraform files just in case of similar state error
+    # - name: Remove existing Terraform files
+    #   run: |
+    #     rm -rf .terraform
+    #     rm -f terraform.tfstate terraform.tfstate.backup
+
     - name: Verify S3 Bucket Existence
       run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
 
@@ -58,8 +64,6 @@ jobs:
           scp -o StrictHostKeyChecking=no setup_k8s.sh root@$IP:/root/
           ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
-
-
 
 
     # - name: Terraform Destroy
