@@ -26,10 +26,10 @@ jobs:
         aws-region: us-east-2
 
     # Remove existing Terraform files just in case of similar state error
-    - name: Remove existing Terraform files
-      run: |
-        rm -rf .terraform
-        rm -f terraform.tfstate terraform.tfstate.backup
+    # - name: Remove existing Terraform files
+    #  run: |
+    #    rm -rf .terraform
+    #    rm -f terraform.tfstate terraform.tfstate.backup
 
     - name: Verify S3 Bucket Existence
       run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
@@ -43,15 +43,21 @@ jobs:
     - name: Extract master IP
       id: extract_master_ip
       run: |
-        MASTER_IP=$(terraform output -raw master_public_ip)
+        # Extract the master IP address and strip any extra output or debug information
+        MASTER_IP=$(terraform output -raw master_public_ip | tr -d '\r')
+        # Set the environment variable for the workflow
         echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
+        # Print the master IP for debugging
         echo "Master IP: ${MASTER_IP}"
 
     - name: Extract worker IPs
       id: extract_worker_ips
       run: |
+        # Extract worker IPs as a JSON array and format them correctly
         WORKER_IPS=$(terraform output -json worker_public_ips | jq -r '.[]')
+        # Set the environment variable for the workflow
         echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
+        # Print worker IPs for debugging
         echo "Worker IPs: ${WORKER_IPS}"
 
     - name: Install SSH client
@@ -73,6 +79,5 @@ jobs:
           ssh -o StrictHostKeyChecking=no "root@$IP" 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
         done
 
-    # Optionally destroy resources
     # - name: Terraform Destroy
     #   run: terraform destroy -auto-approve
