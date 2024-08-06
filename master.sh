@@ -70,18 +70,16 @@ sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
 # Initialize Kubernetes on master
-if hostname | grep -q "master"; then
-  sudo kubeadm init --pod-network-cidr=10.244.0.0/16
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-  # Install a Pod network add-on (Flannel)
-  kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+# Install Flannel on master
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
-  # Generate join command
-  sudo kubeadm token create --print-join-command > /root/join_command.sh
-else
-  # Join worker nodes to the cluster
-  sudo bash /root/join_command.sh
-fi
+# Generate join command
+sudo kubeadm token create --print-join-command > /root/join_command.sh
+
+# Upload join command to S3 bucket
+aws s3 cp /root/join_command.sh s3://my-terraform-state-bucket20124/kube-join-command.sh
