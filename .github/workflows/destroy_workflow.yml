@@ -1,0 +1,39 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm-destruction:
+        description: 'Confirm infrastructure destruction'  
+        required: true
+        default: 'false'
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.0.11
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
+
+    - name: Verify S3 Bucket Existence
+      run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
+
+    - name: Initialize Terraform
+      run: terraform init -backend-config="bucket=my-terraform-state-bucket20124" -backend-config="key=my-my-terraform-state-bucket2024/terraform.tfstate" -backend-config="region=us-east-2" -backend-config="dynamodb_table=terraform-locks"
+
+    - name: Destroy Terraform infrastructure
+      if: github.event.inputs.confirm-destruction == 'true'
+      run: terraform destroy -auto-approve

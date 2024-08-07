@@ -25,11 +25,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-2
 
-    # Remove existing Terraform files just in case of similar state error
-    #- name: Remove existing Terraform files
-    #  run: |
-    #    rm -rf .terraform
-    #    rm -f terraform.tfstate terraform.tfstate.backup
+     # Remove existing Terraform files just in case of similar state error
+     #- name: Remove existing Terraform files
+     #  run: |
+     #    rm -rf .terraform
+     #    rm -f terraform.tfstate terraform.tfstate.backup    
 
     - name: Verify S3 Bucket Existence
       run: aws s3api head-bucket --bucket my-terraform-state-bucket20124 || exit 1
@@ -37,33 +37,26 @@ jobs:
     - name: Initialize Terraform
       run: terraform init -backend-config="bucket=my-terraform-state-bucket20124" -backend-config="key=my-my-terraform-state-bucket2024/terraform.tfstate" -backend-config="region=us-east-2" -backend-config="dynamodb_table=terraform-locks"
 
+    - name: Validate Terraform configuration
+      run: terraform validate
+
     - name: Apply Terraform
       run: terraform apply -auto-approve
-
-    - name: Extract master IP
-      run: |
-        MASTER_IP=$(terraform output master_public_ip | tail -1)
-        echo "MASTER_IP=${MASTER_IP}" >> $GITHUB_ENV
-
-    - name: Extract worker IPs
-      run: |
-        WORKER_IPS=$(terraform output worker_public_ips | awk -F'[" ,]' '{for(i=2;i<=NF;i++) print $i}' | xargs)
-        echo "WORKER_IPS=${WORKER_IPS}" >> $GITHUB_ENV
 
     - name: Install SSH client
       run: sudo apt-get install -y openssh-client
 
     - name: Set up master node
       run: |
-        scp -o StrictHostKeyChecking=no setup_k8s.sh root@$MASTER_IP:/root/
-        ssh -o StrictHostKeyChecking=no root@$MASTER_IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
+        scp -o StrictHostKeyChecking=no master.sh root@$MASTER_IP:/root/
+        ssh -o StrictHostKeyChecking=no root@$MASTER_IP 'chmod +x /root/master.sh && /root/master.sh'
 
     - name: Set up worker nodes
       run: |
         for IP in $WORKER_IPS; do
-          scp -o StrictHostKeyChecking=no setup_k8s.sh root@$IP:/root/
-          ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/setup_k8s.sh && /root/setup_k8s.sh'
+          scp -o StrictHostKeyChecking=no workers.sh root@$IP:/root/
+          ssh -o StrictHostKeyChecking=no root@$IP 'chmod +x /root/workers.sh && /root/workers.sh'
         done
-
+    
     # - name: Terraform Destroy
-    #   run: terraform destroy -auto-approve
+    #   run: terraform destroy -auto-approve    
